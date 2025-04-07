@@ -126,7 +126,7 @@ fn main() -> Result<()> {
             }
             Err(e) => {
                 let mut status = connection_status_clone.lock().unwrap();
-                *status = format!("Connection failed: {}", e);
+                *status = format!("Failed: {}", e);
             }
         }
     });
@@ -348,7 +348,7 @@ impl App {
         // Create a two-line title with status and user ID on separate lines
         let title_text = vec![
             Line::from(vec![Span::styled(
-                "🌍 Global Chat 🌏",
+                "💬 Global Chat 💬",
                 Style::default()
                     .fg(Color::Rgb(0, 230, 118))
                     .add_modifier(Modifier::BOLD),
