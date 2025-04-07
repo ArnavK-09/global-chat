@@ -7,17 +7,6 @@ on:
       - "v*.*.*"
 
 jobs:
-  generate-changelog:
-    name: Generate changelog
-    runs-on: ubuntu-22.04
-    outputs:
-      release_body: ${{ steps.global-chat.outputs.content }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
   publish-binaries:
     name: Publish binaries
     needs: generate-changelog
@@ -31,96 +20,84 @@ jobs:
               OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: x86_64-unknown-linux-gnu,
-              NPM_PUBLISH: true,
-              PYPI_PUBLISH: true,
+              NPM_PUBLISH: true
             }
           - {
               NAME: linux-x64-musl,
               OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: x86_64-unknown-linux-musl,
-              NPM_PUBLISH: false,
-              PYPI_PUBLISH: true,
+              NPM_PUBLISH: false
             }
           - {
               NAME: linux-x86-glibc,
               OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: i686-unknown-linux-gnu,
-              NPM_PUBLISH: false,
-              PYPI_PUBLISH: false,
+              NPM_PUBLISH: false
             }
           - {
               NAME: linux-x86-musl,
               OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: i686-unknown-linux-musl,
-              NPM_PUBLISH: false,
-              PYPI_PUBLISH: true,
+              NPM_PUBLISH: false
             }
           - {
               NAME: linux-arm64-glibc,
               OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: aarch64-unknown-linux-gnu,
-              NPM_PUBLISH: true,
-              PYPI_PUBLISH: true,
+              NPM_PUBLISH: true
             }
           - {
               NAME: linux-arm64-musl,
               OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: aarch64-unknown-linux-musl,
-              NPM_PUBLISH: false,
-              PYPI_PUBLISH: true,
+              NPM_PUBLISH: false
             }
           - {
               NAME: win32-x64-mingw,
               OS: windows-2022,
               TOOLCHAIN: stable,
               TARGET: x86_64-pc-windows-gnu,
-              NPM_PUBLISH: false,
-              PYPI_PUBLISH: false,
+              NPM_PUBLISH: false
             }
           - {
               NAME: win32-x64-msvc,
               OS: windows-2022,
               TOOLCHAIN: stable,
               TARGET: x86_64-pc-windows-msvc,
-              NPM_PUBLISH: true,
-              PYPI_PUBLISH: true,
+              NPM_PUBLISH: true
             }
           - {
               NAME: win32-x86-msvc,
               OS: windows-2022,
               TOOLCHAIN: stable,
               TARGET: i686-pc-windows-msvc,
-              NPM_PUBLISH: false,
-              PYPI_PUBLISH: true,
+              NPM_PUBLISH: false
             }
           - {
               NAME: win32-arm64-msvc,
               OS: windows-2022,
               TOOLCHAIN: stable,
               TARGET: aarch64-pc-windows-msvc,
-              NPM_PUBLISH: true,
-              PYPI_PUBLISH: false,
+              NPM_PUBLISH: true
             }
           - {
               NAME: darwin-x64,
               OS: macos-14,
               TOOLCHAIN: stable,
               TARGET: x86_64-apple-darwin,
-              NPM_PUBLISH: true,
-              PYPI_PUBLISH: true,
+              NPM_PUBLISH: true
             }
           - {
               NAME: darwin-arm64,
               OS: macos-14,
               TOOLCHAIN: stable,
               TARGET: aarch64-apple-darwin,
-              NPM_PUBLISH: true,
-              PYPI_PUBLISH: true,
+              NPM_PUBLISH: true
             }
     steps:
       - name: Checkout
@@ -169,7 +146,7 @@ jobs:
         if: matrix.build.NPM_PUBLISH == true
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           registry-url: "https://registry.npmjs.org"
       - name: Publish to NPM
         if: matrix.build.NPM_PUBLISH == true
@@ -188,7 +165,7 @@ jobs:
             export node_pkg="${bin}-${node_os}-${node_arch}"
           fi
           mkdir -p "${node_pkg}/bin"
-          envsubst < package.json.tmpl > "${node_pkg}/package.json"
+          envsubst < package.tmpl > "${node_pkg}/package.json"
           if [ "${{ matrix.build.OS }}" = "windows-2022" ]; then
             bin="${bin}.exe"
           fi
@@ -198,12 +175,6 @@ jobs:
           npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-        uses: actions/upload-artifact@v4
-        with:
-          name: "wheels-${{ matrix.build.TARGET }}"
-          working-directory: pypi
-          path: pypi/wheels
 
   publish-npm:
     name: Publish the base package to NPM
