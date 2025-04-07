@@ -29,20 +29,37 @@ struct ChatMessage {
     timestamp: u64,
 }
 
-const WEBSERVER_DOMAIN: &str = "localhost:3000";
+const WEBSERVER_URL: &str = "http://localhost:3000";
 
 // Add this function to generate fun usernames
 fn generate_fun_username() -> String {
     let adjectives = [
-        "Happy", "Grumpy", "Sleepy", "Dopey", "Bashful", "Sneezy", "Doc", "Silly", "Wacky",
-        "Jumpy", "Lazy", "Crazy", "Fluffy", "Fuzzy", "Sparkly", "Glittery", "Shiny", "Rusty",
-        "Squeaky", "Wobbly",
+        "Skibidi", "Rizz", "Gyatt", "Bussin", "Based", "Cringe", "Sheesh", "Vibing", "Slay",
+        "Goated", "Lit", "Yeet", "Swag", "Drip", "Poggers", "Ratio", "Copium", "Hopium", "Mald",
+        "Sigma",
     ];
 
     let nouns = [
-        "Panda", "Koala", "Sloth", "Penguin", "Raccoon", "Hedgehog", "Otter", "Potato", "Noodle",
-        "Muffin", "Cookie", "Cupcake", "Pancake", "Waffle", "Robot", "Ninja", "Pirate", "Wizard",
-        "Unicorn", "Dragon",
+        "Wizard",
+        "Master",
+        "Developer",
+        "Titan",
+        "Demon",
+        "King",
+        "Queen",
+        "Chad",
+        "Gigachad",
+        "Npc",
+        "Boss",
+        "Legend",
+        "Goat",
+        "Vibe",
+        "Mood",
+        "Moment",
+        "Energy",
+        "Rizz",
+        "Chamber",
+        "Warrior",
     ];
 
     let mut rng = thread_rng();
@@ -50,7 +67,7 @@ fn generate_fun_username() -> String {
     let noun = nouns.choose(&mut rng).unwrap();
     let n: u32 = rand::Rng::gen_range(&mut rng, 0..100);
 
-    format!("{}-{}-{:02}", adjective, noun, n).to_lowercase()
+    format!("{}_{}_{:02}", adjective, noun, n).to_lowercase()
 }
 
 // In main(), replace the UUID generation with:
@@ -77,7 +94,11 @@ fn main() -> Result<()> {
     // Spawn the WebSocket client task
     rt.spawn(async move {
         // The URL format needs to match what the server expects
-        let ws_url = format!("ws://{}/?userId={}", WEBSERVER_DOMAIN, user_id_for_ws);
+        let ws_url = format!(
+            "ws://{}/?userId={}",
+            WEBSERVER_URL.split("/").last().unwrap_or("localhost:3000"),
+            user_id_for_ws
+        );
 
         match connect_async(ws_url).await {
             Ok((ws_stream, _)) => {
@@ -142,7 +163,7 @@ fn main() -> Result<()> {
     // Spawn a task to periodically update the user count
     rt.spawn(async move {
         loop {
-            if let Ok(response) = reqwest::get(format!("http://{}/users", WEBSERVER_DOMAIN)).await {
+            if let Ok(response) = reqwest::get(format!("{}/users", WEBSERVER_URL)).await {
                 if let Ok(data) = response.json::<serde_json::Value>().await {
                     if let Some(count) = data["count"].as_u64() {
                         let mut users = connected_users.lock().unwrap();
@@ -414,8 +435,7 @@ impl App {
             .skip(start_idx)
             .take(visible_height)
             .enumerate()
-            .map(|(i, (m, from_user, author))| {
-                let message_index = start_idx + i + 1;
+            .map(|(_, (m, from_user, author))| {
                 let is_right_aligned = *from_user;
                 let available_width = messages_area.width.saturating_sub(10) as usize;
                 let wrapped_message = textwrap::wrap(m, available_width);
@@ -424,10 +444,23 @@ impl App {
                 // Add a blank line before each message for spacing
                 list_item_spans.push(Line::from(""));
 
-                // Check if this is a system message
+                // Check if this is a system message or history loaded message
                 let is_system_message = author == "system";
+                let is_history_loaded = author == "history_loaded";
 
-                if is_system_message {
+                if is_history_loaded {
+                    // History loaded message - display centered dashed line
+                    let line = "--- Recent Messages ---";
+                    let padding = (messages_area.width as usize)
+                        .saturating_sub(line.len())
+                        .saturating_div(2);
+
+                    let mut centered_spans = Vec::new();
+                    centered_spans.push(Span::raw(" ".repeat(padding)));
+                    centered_spans.push(Span::styled(line, Style::default().fg(Color::DarkGray)));
+
+                    list_item_spans.push(Line::from(centered_spans));
+                } else if is_system_message {
                     // System message - display centered with special styling
                     for line in wrapped_message {
                         let line_spans = vec![Span::styled(
@@ -465,12 +498,12 @@ impl App {
                                     Style::default().bg(Color::Rgb(0, 92, 75)).fg(Color::White),
                                 ));
                                 line_spans.push(Span::styled(
-                                    format!(" 🫵 #{} ", message_index),
+                                    format!(" 🫵 "),
                                     Style::default().fg(Color::DarkGray),
                                 ));
                             } else {
                                 line_spans.push(Span::styled(
-                                    format!(" #{} 🤘 ", message_index),
+                                    format!(" 🤘 "),
                                     Style::default().fg(Color::DarkGray),
                                 ));
                                 line_spans.push(Span::styled(
