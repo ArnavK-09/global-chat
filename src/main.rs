@@ -48,8 +48,9 @@ fn generate_fun_username() -> String {
     let mut rng = thread_rng();
     let adjective = adjectives.choose(&mut rng).unwrap();
     let noun = nouns.choose(&mut rng).unwrap();
+    let n: u32 = rand::Rng::gen_range(&mut rng, 0..100);
 
-    format!("{}-{}", adjective, noun).to_lowercase()
+    format!("{}-{}-{:02}", adjective, noun, n).to_lowercase()
 }
 
 // In main(), replace the UUID generation with:
@@ -163,7 +164,7 @@ struct App {
     input: String,
     character_index: usize,
     input_mode: InputMode,
-    messages: Vec<(String, bool)>,
+    messages: Vec<(String, bool, String)>,
     messages_scroll_state: ScrollbarState,
     messages_scroll: usize,
     ws_tx: mpsc::Sender<String>,
@@ -256,8 +257,8 @@ impl App {
         }
     }
 
-    fn append_message(&mut self, message: String, from_user: bool) {
-        self.messages.push((message, from_user));
+    fn append_message(&mut self, message: String, from_user: bool, author_id: String) {
+        self.messages.push((message, from_user, author_id));
         self.messages_scroll = self.messages.len().saturating_sub(1);
         self.messages_scroll_state = self.messages_scroll_state.position(self.messages_scroll);
     }
@@ -270,7 +271,7 @@ impl App {
             // Check for new messages from WebSocket
             if let Ok(msg) = self.msg_rx.try_recv() {
                 let is_from_user = msg.author_id == self.user_id;
-                self.append_message(msg.content, is_from_user);
+                self.append_message(msg.content, is_from_user, msg.author_id);
             }
 
             terminal.draw(|frame| self.draw(frame))?;
@@ -381,7 +382,7 @@ impl App {
 
         // Calculate total lines needed for all messages to determine proper scrolling
         let mut total_lines = 0;
-        let messages_with_line_counts: Vec<(usize, &(String, bool))> = self
+        let messages_with_line_counts: Vec<(usize, &(String, bool, String))> = self
             .messages
             .iter()
             .map(|msg| {
@@ -413,20 +414,18 @@ impl App {
             .skip(start_idx)
             .take(visible_height)
             .enumerate()
-            .map(|(i, (m, from_user))| {
+            .map(|(i, (m, from_user, author))| {
                 let message_index = start_idx + i + 1;
                 let is_right_aligned = *from_user;
                 let available_width = messages_area.width.saturating_sub(10) as usize;
                 let wrapped_message = textwrap::wrap(m, available_width);
                 let mut list_item_spans = Vec::new();
 
-                // Add a blank line before each message for spacing (except the first one)
-                if i > 0 {
-                    list_item_spans.push(Line::from(""));
-                }
+                // Add a blank line before each message for spacing
+                list_item_spans.push(Line::from(""));
 
-                // Check if this is a system message (starts with "User" and contains "joined the chat")
-                let is_system_message = m.starts_with("User") && m.contains("joined the chat");
+                // Check if this is a system message
+                let is_system_message = author == "system";
 
                 if is_system_message {
                     // System message - display centered with special styling

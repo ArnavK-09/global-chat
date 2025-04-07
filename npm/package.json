@@ -1,7 +1,7 @@
 {
   "name": "global-chat",
   "version": "0.0.1",
-  "description": "💬 Terminal-based Real-time Chat Application...",
+  "description": "💬 Terminal-based minimal real-time chat app...",
   "keywords": [
     "chat",
     "real-time",
