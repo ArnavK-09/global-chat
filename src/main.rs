@@ -29,7 +29,7 @@ struct ChatMessage {
     timestamp: u64,
 }
 
-const WEBSERVER_URL: &str = "http://localhost:3000";
+const WEBSERVER_URL: &str = "https://protective-giacinta-arnavk-09-6c1478d5.koyeb.app/";
 
 // Add this function to generate fun usernames
 fn generate_fun_username() -> String {
