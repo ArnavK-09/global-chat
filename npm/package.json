@@ -1,0 +1,33 @@
+{
+  "name": "global-chat",
+  "version": "0.0.1",
+  "description": "💬 Terminal-based Real-time Chat Application...",
+  "keywords": [
+    "chat",
+    "real-time",
+    "websocket",
+    "terminal",
+    "tui",
+    "rust",
+    "ratatui",
+    "cross-platform",
+    "cli",
+    "chat"
+  ],
+  "bin": "index.js",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "optionalDependencies": {
+    "global-chat-linux-x64": "0.0.5",
+    "global-chat-linux-arm64": "0.0.5",
+    "global-chat-darwin-x64": "0.0.5",
+    "global-chat-darwin-arm64": "0.0.5",
+    "global-chat-windows-x64": "0.0.5",
+    "global-chat-windows-arm64": "0.0.5"
+  }
+}

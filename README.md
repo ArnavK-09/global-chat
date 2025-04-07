@@ -110,24 +110,12 @@ Found a bug or need help? Please create an issue on the [GitHub repository](http
   </tbody>
 </table>
 
-
-## 🛣️ Roadmap
-
-|Task | Status |
-| :---: | :---: |
-|🎨 Modern Terminal UI | 🟢 | 
-|🔄 Real-time Chat | 🟢 | 
-|👥 User Management | 🟢 | 
-|📱 Mobile Support | 🟡 | 
-|🔐 Authentication | 🔴 | 
-
-
 ---
 
 <h2 align="center">📄 License</h2>
 
 <p align="center">
-<strong>Global Chat</strong> is licensed under the <code>Unlicense</code> License. See the <a href="https://github.com/ArnavK-09/global-chat/blob/main/LICENSE">LICENSE</a> file for more details.
+<strong>Global Chat</strong> is licensed under the <code>MIT</code> License. See the <a href="LICENSE">LICENSE</a> file for more details.
 </p>
 
 ---

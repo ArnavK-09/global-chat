@@ -31,7 +31,7 @@ const server = Bun.serve<WebSocketData, { userid: any }>({
         JSON.stringify({ count: clients.length, users: clients }),
         {
           headers: { "Content-Type": "application/json" },
-        },
+        }
       );
     }
 
@@ -46,7 +46,7 @@ const server = Bun.serve<WebSocketData, { userid: any }>({
         JSON.stringify({ messages: recentMessages.slice(0, 10) }),
         {
           headers: { "Content-Type": "application/json" },
-        },
+        }
       );
     }
 
@@ -79,7 +79,7 @@ const server = Bun.serve<WebSocketData, { userid: any }>({
             "Content-Type": "application/json",
             "Cache-Control": "no-cache",
           },
-        },
+        }
       );
     }
 
