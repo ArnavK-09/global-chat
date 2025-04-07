@@ -9,7 +9,6 @@ on:
 jobs:
   publish-binaries:
     name: Publish binaries
-    needs: generate-changelog
     runs-on: ${{ matrix.build.os }}
     strategy:
       fail-fast: false
@@ -132,17 +131,6 @@ jobs:
         with:
           command: build
           args: --release --locked --target ${{ matrix.build.TARGET }} # --no-default-features
-      - name: Release action
-        if: ${{ !contains(github.ref, '-') }}
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: global-chat-${{ env.RELEASE_VERSION }}-${{ matrix.build.TARGET }}*
-          file_glob: true
-          overwrite: true
-          tag: ${{ github.ref }}
-          release_name: "Release v${{ env.RELEASE_VERSION }}"
-          body: "${{ needs.generate-changelog.outputs.release_body }}"
       - name: Install node
         if: matrix.build.NPM_PUBLISH == true
         uses: actions/setup-node@v4
@@ -160,6 +148,7 @@ jobs:
           node_arch=$(echo "${{ matrix.build.NAME }}" | cut -d '-' -f2)
           export node_arch
           export version="${{ env.RELEASE_VERSION }}"
+          export node_version="${{ env.RELEASE_VERSION }}"
           if [ "${{ matrix.build.OS }}" = "windows-2022" ]; then
             export node_pkg="${bin}-windows-${node_arch}"
           else
