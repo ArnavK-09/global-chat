@@ -1,4 +1,4 @@
-FROM oven/bun:2
+FROM oven/bun:1
 WORKDIR /server
 COPY . .
 RUN bun install
