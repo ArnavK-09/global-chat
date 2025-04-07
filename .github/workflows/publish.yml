@@ -1,14 +1,26 @@
+# https://github.com/orhun/global-chat/blob/main/.github/workflows/cd.yml
 name: Publish Package!
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - "v*.*.*"
 
 jobs:
-  publish-npm-binaries:
-    name: Publish NPM packages
+  generate-changelog:
+    name: Generate changelog
+    runs-on: ubuntu-22.04
+    outputs:
+      release_body: ${{ steps.global-chat.outputs.content }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+  publish-binaries:
+    name: Publish binaries
+    needs: generate-changelog
     runs-on: ${{ matrix.build.os }}
     strategy:
       fail-fast: false
@@ -16,85 +28,151 @@ jobs:
         build:
           - {
               NAME: linux-x64-glibc,
-              OS: ubuntu-20.04,
+              OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: x86_64-unknown-linux-gnu,
+              NPM_PUBLISH: true,
+              PYPI_PUBLISH: true,
+            }
+          - {
+              NAME: linux-x64-musl,
+              OS: ubuntu-22.04,
+              TOOLCHAIN: stable,
+              TARGET: x86_64-unknown-linux-musl,
+              NPM_PUBLISH: false,
+              PYPI_PUBLISH: true,
+            }
+          - {
+              NAME: linux-x86-glibc,
+              OS: ubuntu-22.04,
+              TOOLCHAIN: stable,
+              TARGET: i686-unknown-linux-gnu,
+              NPM_PUBLISH: false,
+              PYPI_PUBLISH: false,
+            }
+          - {
+              NAME: linux-x86-musl,
+              OS: ubuntu-22.04,
+              TOOLCHAIN: stable,
+              TARGET: i686-unknown-linux-musl,
+              NPM_PUBLISH: false,
+              PYPI_PUBLISH: true,
             }
           - {
               NAME: linux-arm64-glibc,
-              OS: ubuntu-20.04,
+              OS: ubuntu-22.04,
               TOOLCHAIN: stable,
               TARGET: aarch64-unknown-linux-gnu,
+              NPM_PUBLISH: true,
+              PYPI_PUBLISH: true,
+            }
+          - {
+              NAME: linux-arm64-musl,
+              OS: ubuntu-22.04,
+              TOOLCHAIN: stable,
+              TARGET: aarch64-unknown-linux-musl,
+              NPM_PUBLISH: false,
+              PYPI_PUBLISH: true,
+            }
+          - {
+              NAME: win32-x64-mingw,
+              OS: windows-2022,
+              TOOLCHAIN: stable,
+              TARGET: x86_64-pc-windows-gnu,
+              NPM_PUBLISH: false,
+              PYPI_PUBLISH: false,
             }
           - {
               NAME: win32-x64-msvc,
               OS: windows-2022,
               TOOLCHAIN: stable,
               TARGET: x86_64-pc-windows-msvc,
+              NPM_PUBLISH: true,
+              PYPI_PUBLISH: true,
+            }
+          - {
+              NAME: win32-x86-msvc,
+              OS: windows-2022,
+              TOOLCHAIN: stable,
+              TARGET: i686-pc-windows-msvc,
+              NPM_PUBLISH: false,
+              PYPI_PUBLISH: true,
             }
           - {
               NAME: win32-arm64-msvc,
               OS: windows-2022,
               TOOLCHAIN: stable,
               TARGET: aarch64-pc-windows-msvc,
+              NPM_PUBLISH: true,
+              PYPI_PUBLISH: false,
             }
           - {
               NAME: darwin-x64,
               OS: macos-14,
               TOOLCHAIN: stable,
               TARGET: x86_64-apple-darwin,
+              NPM_PUBLISH: true,
+              PYPI_PUBLISH: true,
             }
           - {
               NAME: darwin-arm64,
               OS: macos-14,
               TOOLCHAIN: stable,
               TARGET: aarch64-apple-darwin,
+              NPM_PUBLISH: true,
+              PYPI_PUBLISH: true,
             }
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set the release version
         shell: bash
+        run: echo "RELEASE_VERSION=${GITHUB_REF:11}" >> $GITHUB_ENV
+      - name: Install dependencies
+        shell: bash
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          else
-            echo "GITHUB_REF does not point to a tag. Falling back to the latest release tag."
-            # Fetch latest tag from GitHub
-            git fetch --tags
-            LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-            if [[ -z "$LATEST_TAG" ]]; then
-              echo "Error: No tags found in the repository." >&2
-              exit 1
-            fi
-            echo "RELEASE_VERSION=${LATEST_TAG}" >> $GITHUB_ENV
+          if [[ "${{ matrix.build.NAME }}" = *"-musl" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends \
+              --allow-unauthenticated musl-tools
           fi
-          
-      - name: Print release version
-        run: echo "Release version is $RELEASE_VERSION"
-        
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.build.TOOLCHAIN }}
           target: ${{ matrix.build.TARGET }}
           override: true
-
-      - name: Build
+      - name: Build (linux/macos)
+        if: matrix.build.OS != 'windows-2022'
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --locked --target ${{ matrix.build.TARGET }}
+      - name: Build (windows)
+        if: matrix.build.OS == 'windows-2022'
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --target ${{ matrix.build.TARGET }}
-          use-cross: ${{ matrix.build.OS == 'ubuntu-20.04' }} # use `cross` for Linux builds
-
+          args: --release --locked --target ${{ matrix.build.TARGET }} # --no-default-features
+        if: ${{ !contains(github.ref, '-') }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: global-chat-${{ env.RELEASE_VERSION }}-${{ matrix.build.TARGET }}*
+          file_glob: true
+          overwrite: true
+          tag: ${{ github.ref }}
+          release_name: "Release v${{ env.RELEASE_VERSION }}"
+          body: "${{ needs.generate-changelog.outputs.release_body }}"
       - name: Install node
+        if: matrix.build.NPM_PUBLISH == true
         uses: actions/setup-node@v4
         with:
           node-version: 18
           registry-url: "https://registry.npmjs.org"
-
       - name: Publish to NPM
+        if: matrix.build.NPM_PUBLISH == true
         shell: bash
         run: |
           cd npm
@@ -103,46 +181,56 @@ jobs:
           export node_os
           node_arch=$(echo "${{ matrix.build.NAME }}" | cut -d '-' -f2)
           export node_arch
-          export node_version="${{ env.RELEASE_VERSION }}"
-          # note: use 'windows' as OS name instead of 'win32'
+          export version="${{ env.RELEASE_VERSION }}"
           if [ "${{ matrix.build.OS }}" = "windows-2022" ]; then
             export node_pkg="${bin}-windows-${node_arch}"
           else
             export node_pkg="${bin}-${node_os}-${node_arch}"
           fi
           mkdir -p "${node_pkg}/bin"
-          envsubst < package.tmpl > "${node_pkg}/package.json"
-          cp "../README.md" "${node_pkg}/README.md"
-          # note: windows binaries has '.exe' extension
+          envsubst < package.json.tmpl > "${node_pkg}/package.json"
           if [ "${{ matrix.build.OS }}" = "windows-2022" ]; then
             bin="${bin}.exe"
           fi
           cp "../target/${{ matrix.build.TARGET }}/release/${bin}" "${node_pkg}/bin"
-          # publish the package
+          cp ../README.md "${node_pkg}"
           cd "${node_pkg}"
-          npm publish --access public
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  publish-npm-base:
-    name: Publish the base NPM package
-    needs: publish-npm-binaries
-    runs-on: ubuntu-20.04
+        uses: actions/upload-artifact@v4
+        with:
+          name: "wheels-${{ matrix.build.TARGET }}"
+          working-directory: pypi
+          path: pypi/wheels
+
+  publish-npm:
+    name: Publish the base package to NPM
+    needs: publish-binaries
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Install node
         uses: actions/setup-node@v4
         with:
           node-version: 18
           registry-url: "https://registry.npmjs.org"
-
       - name: Publish the package
         shell: bash
+        working-directory: npm
         run: |
-          cd npm
-          cp "../README.md" "README.md"
-          npm publish --access public
+          yarn config set npmAuthToken ${NODE_AUTH_TOKEN}
+          yarn config set npmPublishRegistry "https://registry.npmjs.org"
+          yarn install
+          yarn build
+          cp ../README.md .
+          if [ ${{ contains(github.ref, '-') }} = "true" ]; then
+            yarn npm publish --tag rc
+          else
+            yarn npm publish
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          YARN_ENABLE_IMMUTABLE_INSTALLS: false
