@@ -48,12 +48,13 @@ bun run index.ts
 
 ## 📷 Screenshots
 
-> Experience the modern terminal interface of Global Chat
-
 | Chat Interface  |
 |------------|
-| ![Demo](/assets/screenshot.png) |
+| ![image](https://github.com/user-attachments/assets/f1e1fc51-a7dc-4361-8b02-52ea0afcdcae) |
 
+## 📷 Demo Video
+
+https://github.com/user-attachments/assets/745dcc5c-c651-4aa3-80d5-5b4af507d119
 
 ---
 
