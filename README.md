@@ -2,7 +2,7 @@
 <h2 align="center">A Modern Terminal-based Real-time Chat Application</h2>
 
 <p align="center">
-    <img alt="hero" width="450" src="/assets/vibe_coded.png" />
+    <img alt="hero" width="100%" height="300rem" src="/assets/vibe_coded.png" />
 </p>
 
 > [!NOTE]
