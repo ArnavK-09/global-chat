@@ -14,11 +14,11 @@ function getExecutablePath() {
 
   try {
     return require.resolve(
-      `global-chat-${os}-${arch}/bin/global-chat${extension}`
+      `global-chat-${os}-${arch}/bin/global-chat${extension}`,
     );
   } catch {
     throw new Error(
-      `Couldn't find application binary inside node_modules for ${os}-${arch}`
+      `Couldn't find application binary inside node_modules for ${os}-${arch}`,
     );
   }
 }

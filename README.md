@@ -5,11 +5,9 @@
     <img alt="hero" width="450" src="https://emoji-route.deno.dev/svg/💬" />
 </p>
 
-
 > [!NOTE]
-> 
+>
 > Global Chat is a feature-rich terminal-based chat application that enables real-time communication with a modern, stylish interface. Built with Rust for the client and Bun for the server, it combines performance with an excellent user experience.
-
 
 <p align="center">
     <img alt="vibe code badge" width="100%" height="300rem" src="/assets/vibe_coded.png" />
@@ -54,8 +52,8 @@ bun run index.ts
 
 ## 📷 Screenshots
 
-| Chat Interface  |
-|------------|
+| Chat Interface                                                                            |
+| ----------------------------------------------------------------------------------------- |
 | ![image](https://github.com/user-attachments/assets/f1e1fc51-a7dc-4361-8b02-52ea0afcdcae) |
 
 ## 📷 Demo Video

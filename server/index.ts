@@ -40,32 +40,58 @@ console.log("✅ Database schema created successfully");
 
 // Insert initial system messages if table is empty
 console.log("🔍 Checking if messages table is empty...");
-if (!(db.query("SELECT COUNT(*) as count FROM messages").get() as {count: number}).count) {
+if (
+  !(
+    db.query("SELECT COUNT(*) as count FROM messages").get() as {
+      count: number;
+    }
+  ).count
+) {
   console.log("📝 Inserting initial system messages...");
   const initialMessages = [
-    ["yo this terminal chat UI is straight fire ngl 🔥", "skibidi_wizard_42", Date.now() - 4000],
-    ["fr fr the emoji support be hittin different", "rizz_master_69", Date.now() - 3000],
+    [
+      "yo this terminal chat UI is straight fire ngl 🔥",
+      "skibidi_wizard_42",
+      Date.now() - 4000,
+    ],
+    [
+      "fr fr the emoji support be hittin different",
+      "rizz_master_69",
+      Date.now() - 3000,
+    ],
     ["skibidi_wizard_42 left the chat", "system", Date.now() - 2000],
-    ["ong the auto usernames are giving main character energy", "based_demon_55", Date.now() - 1000]
+    [
+      "ong the auto usernames are giving main character energy",
+      "based_demon_55",
+      Date.now() - 1000,
+    ],
   ];
-  
+
   for (const [content, authorId, timestamp] of initialMessages) {
     console.log(`💾 Inserting message from ${authorId}: ${content}`);
-    db.run(`
+    db.run(
+      `
       INSERT INTO messages (content, authorId, timestamp)
       VALUES (?, ?, ?)
-    `, [content, authorId, timestamp as any]);
+    `,
+      [content, authorId, timestamp as any],
+    );
   }
   console.log("✅ Initial messages inserted successfully");
 }
 
 console.log("📚 Fetching recent messages from database...");
-const recentMessages = db.query(`
+const recentMessages = db
+  .query(
+    `
   SELECT content, authorId, timestamp
   FROM messages
   ORDER BY timestamp DESC
   LIMIT 5
-`).all().reverse() as unknown as ChatMessage[];
+`,
+  )
+  .all()
+  .reverse() as unknown as ChatMessage[];
 console.log(`📊 Loaded ${recentMessages.length} recent messages`);
 
 const MAX_RECENT_MESSAGES = 5;
@@ -86,13 +112,13 @@ const server = Bun.serve<WebSocketData, { userid: any }>({
         JSON.stringify({ count: clients.length, users: clients }),
         {
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
     if (url.pathname === "/messages") {
       console.log(
-        `📜 All messages requested - Total messages: ${recentMessages.length}`
+        `📜 All messages requested - Total messages: ${recentMessages.length}`,
       );
       return new Response(JSON.stringify(recentMessages), {
         headers: { "Content-Type": "application/json" },
@@ -105,7 +131,7 @@ const server = Bun.serve<WebSocketData, { userid: any }>({
         JSON.stringify({ messages: recentMessages.slice(0, 10) }),
         {
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -139,7 +165,7 @@ const server = Bun.serve<WebSocketData, { userid: any }>({
             "Content-Type": "application/json",
             "Cache-Control": "no-cache",
           },
-        }
+        },
       );
     }
 
@@ -159,7 +185,7 @@ const server = Bun.serve<WebSocketData, { userid: any }>({
       console.log(`👥 Total clients: ${clients.length}`);
 
       console.log(`📤 Sending message history to ${ws.data.userId}`);
-      for (const m of recentMessages.slice(0,5)) {
+      for (const m of recentMessages.slice(0, 5)) {
         ws.send(JSON.stringify(m));
       }
       ws.send(
@@ -167,7 +193,7 @@ const server = Bun.serve<WebSocketData, { userid: any }>({
           content: "History loaded...",
           authorId: "history_loaded",
           timestamp: Date.now(),
-        })
+        }),
       );
       console.log(`📚 Sent message history to: ${ws.data.userId}`);
 
@@ -199,7 +225,9 @@ const server = Bun.serve<WebSocketData, { userid: any }>({
           timestamp: Date.now(),
         };
 
-        console.log(`📝 Created chat message object: ${JSON.stringify(chatMessage)}`);
+        console.log(
+          `📝 Created chat message object: ${JSON.stringify(chatMessage)}`,
+        );
         addToRecentMessages(chatMessage);
         broadcastMessage(chatMessage);
         console.log(`📢 Message broadcasted from: ${ws.data.userId}`);
@@ -207,7 +235,7 @@ const server = Bun.serve<WebSocketData, { userid: any }>({
       } catch (error) {
         console.error(
           `❌ Error processing message from ${ws.data.userId}:`,
-          error
+          error,
         );
         ws.send(JSON.stringify({ error: "Failed to process message" }));
       }
@@ -234,26 +262,38 @@ const server = Bun.serve<WebSocketData, { userid: any }>({
 });
 
 function addToRecentMessages(message: ChatMessage) {
-  console.log(`\n📥 Adding new message to database: ${JSON.stringify(message)}`);
+  console.log(
+    `\n📥 Adding new message to database: ${JSON.stringify(message)}`,
+  );
   // Insert new message into database
-  db.run(`
+  db.run(
+    `
     INSERT INTO messages (content, authorId, timestamp)
     VALUES (?, ?, ?)
-  `, [message.content, message.authorId, message.timestamp]);
+  `,
+    [message.content, message.authorId, message.timestamp],
+  );
   console.log("✅ Message inserted into database");
 
   // Keep only the latest 5 messages in memory
   console.log("🔄 Updating recent messages in memory");
-  const latestMessages = db.query(`
+  const latestMessages = db
+    .query(
+      `
     SELECT content, authorId, timestamp
     FROM messages
     ORDER BY timestamp DESC
     LIMIT 5
-  `).all().reverse();
-  console.log(`📊 Retrieved ${latestMessages.length} latest messages from database`);
+  `,
+    )
+    .all()
+    .reverse();
+  console.log(
+    `📊 Retrieved ${latestMessages.length} latest messages from database`,
+  );
 
   recentMessages.length = 0;
-  recentMessages.push(...latestMessages as ChatMessage[]);
+  recentMessages.push(...(latestMessages as ChatMessage[]));
   console.log("✅ Recent messages array updated");
 
   // Delete old messages from database, keeping only latest 5
@@ -268,14 +308,16 @@ function addToRecentMessages(message: ChatMessage) {
   `);
   console.log("✅ Old messages cleaned up");
 
-  console.log(`📝 Message added to history (Total: ${recentMessages.length}/${MAX_RECENT_MESSAGES})`);
+  console.log(
+    `📝 Message added to history (Total: ${recentMessages.length}/${MAX_RECENT_MESSAGES})`,
+  );
 }
 
 function broadcastMessage(message: ChatMessage) {
   const messageStr = JSON.stringify(message);
   console.log(`\n📢 Broadcasting message to ${clients.length} clients`);
   console.log(`📦 Message content: ${messageStr}`);
-  
+
   for (const client of clients) {
     client.ws.send(messageStr);
     console.log(`  ↪️ Sent to: ${client.id}`);
