@@ -14,8 +14,8 @@ use ratatui::{
         ScrollbarOrientation, ScrollbarState, Wrap,
     },
 };
-use reqwest;
 use serde::{Deserialize, Serialize};
+use std::io::{Read, Write};
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
@@ -29,7 +29,7 @@ struct ChatMessage {
     timestamp: u64,
 }
 
-const WEBSERVER_URL: &str = "https://protective-giacinta-arnavk-09-6c1478d5.koyeb.app/";
+const WEBSERVER_URL: &str = "https://protective-giacinta-arnavk-09-6c1478d5.koyeb.app";
 
 // Add this function to generate fun usernames
 fn generate_fun_username() -> String {
@@ -163,15 +163,33 @@ fn main() -> Result<()> {
     // Spawn a task to periodically update the user count
     rt.spawn(async move {
         loop {
-            if let Ok(response) = reqwest::get(format!("{}/users", WEBSERVER_URL)).await {
-                if let Ok(data) = response.json::<serde_json::Value>().await {
-                    if let Some(count) = data["count"].as_u64() {
-                        let mut users = connected_users.lock().unwrap();
-                        *users = count as usize;
+            let host = WEBSERVER_URL.split("/").last().unwrap_or("localhost:3000");
+            if let Ok(mut stream) = std::net::TcpStream::connect(host) {
+                let request = format!(
+                    "GET /users HTTP/1.1\r\n\
+                    Host: {}\r\n\
+                    Connection: close\r\n\
+                    \r\n",
+                    host
+                );
+
+                if stream.write_all(request.as_bytes()).is_ok() {
+                    let mut response = String::new();
+                    if let Ok(_) = std::io::BufReader::new(&stream).read_to_string(&mut response) {
+                        if let Some(body_start) = response.find("\r\n\r\n") {
+                            if let Ok(json) = serde_json::from_str::<serde_json::Value>(
+                                &response[body_start + 4..],
+                            ) {
+                                if let Some(count) = json["count"].as_u64() {
+                                    let mut users = connected_users.lock().unwrap();
+                                    *users = count as usize;
+                                }
+                            }
+                        }
                     }
                 }
             }
-            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+            std::thread::sleep(std::time::Duration::from_secs(5));
         }
     });
 
@@ -328,6 +346,11 @@ impl App {
                                 self.scroll_messages_down();
                             }
                             KeyCode::Esc => self.input_mode = InputMode::Normal,
+                            KeyCode::Char('q')
+                                if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                            {
+                                return Ok(());
+                            }
                             KeyCode::Char(to_insert) => self.enter_char(to_insert),
                             _ => {}
                         },
