@@ -191,7 +191,6 @@ jobs:
           yarn config set npmAuthToken ${NODE_AUTH_TOKEN}
           yarn config set npmPublishRegistry "https://registry.npmjs.org"
           yarn install
-          yarn build
           cp ../README.md .
           if [ ${{ contains(github.ref, '-') }} = "true" ]; then
             yarn npm publish --tag rc
