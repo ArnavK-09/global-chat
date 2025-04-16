@@ -2,6 +2,7 @@
 name: Publish Package!
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*.*.*"
@@ -192,7 +193,7 @@ jobs:
           npm config set npmPublishRegistry "https://registry.npmjs.org"
           npm install
           cp ../README.md .
-            pm publish
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           YARN_ENABLE_IMMUTABLE_INSTALLS: false
