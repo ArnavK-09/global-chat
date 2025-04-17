@@ -189,8 +189,6 @@ jobs:
         shell: bash
         working-directory: npm
         run: |
-          npm config set npmAuthToken ${NODE_AUTH_TOKEN}
-          npm config set npmPublishRegistry "https://registry.npmjs.org"
           npm install
           cp ../README.md .
           npm publish
