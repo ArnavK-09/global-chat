@@ -1,6 +1,6 @@
 {
-  "name": "global-chat",
-  "version": "0.0.13",
+  "name": "@arnavk-09/global-chat",
+  "version": "0.0.15",
   "license": "MIT",
   "description": "💬 Terminal-based minimal real-time chat app...",
   "keywords": [
@@ -24,11 +24,11 @@
     "dev": "node index.js"
   },
   "optionalDependencies": {
-    "global-chat-linux-x64": "0.0.13",
-    "global-chat-linux-arm64": "0.0.13",
-    "global-chat-darwin-x64": "0.0.13",
-    "global-chat-darwin-arm64": "0.0.13",
-    "global-chat-windows-x64": "0.0.13",
-    "global-chat-windows-arm64": "0.0.13"
+    "global-chat-linux-x64": "0.0.15",
+    "global-chat-linux-arm64": "0.0.15",
+    "global-chat-darwin-x64": "0.0.15",
+    "global-chat-darwin-arm64": "0.0.15",
+    "global-chat-windows-x64": "0.0.15",
+    "global-chat-windows-arm64": "0.0.15"
   }
 }
