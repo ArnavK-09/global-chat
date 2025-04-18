@@ -13,6 +13,14 @@
     <img alt="vibe code badge" width="100%" height="300rem" src="/assets/vibe_coded.png" />
 </p>
 
+###### bun terminal
+```bash
+bun x @arnavk-09/global-chat
+```
+###### npm terminal
+```bash
+npx @arnavk-09/global-chat
+```
 ## 🌟 Features
 
 > **Global Chat** offers a comprehensive chat experience:
